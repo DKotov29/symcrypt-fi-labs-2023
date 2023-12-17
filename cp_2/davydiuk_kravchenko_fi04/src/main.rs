@@ -1,4 +1,7 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
+use std::fs;
+use std::fs::File;
+
 // fn main() {
 //     let russian_char = 'б'; // The starting Russian character
 //
@@ -7,152 +10,90 @@ use std::collections::HashSet;
 //     println!("Original: {}", russian_char);
 //     println!("Incremented: {}", incremented_char);
 // }
-use std::fs;
+use std::io::Read;
+use std::iter::Iterator;
 
+const ALPH: &str = "абвгдежзийклмнопрстуфхцчшщъыьэюя";
+const ALPH_LEN: usize = 32usize;
+const PR: [f64; 32] = [0.0792, 0.0171, 0.0433, 0.0174, 0.0305, 0.0841, 0.0105, 0.0175, 0.0683, 0.0112, 0.0336, 0.0500, 0.0326, 0.0672, 0.1108, 0.0281, 0.0445, 0.0533, 0.0618, 0.0280, 0.0019, 0.0089, 0.0036, 0.0147, 0.0081, 0.0037, 0.0002, 0.0196, 0.0192, 0.0038, 0.0061, 0.0213];
+// static mut RING: Lazy<HashMap<char, usize>, HashMap<char, usize>> = Lazy::new(HashMap::from_iter(ALPH.chars().enumerate().map(|(i1, i2)| (i2, i1))));
 
-fn encrypt(key: &str) -> String {
-    let mut buffff = String::new();
-    let mut file_content = fs::read_to_string("TEXT").expect("problem with reading of file");
-    let mut result = String::new();
-    let mut key = key.to_string();
+fn main() {
+    let ring: HashMap<char, usize> = HashMap::from_iter(ALPH.chars().enumerate().map(|(i1, i2)| (i2, i1)));
+    println!("{ring:#?}");
+    // for (e, char) in ALPH.chars().enumerate() {
+    //     unsafe { RING.insert(char, e); }
+    // }
+    let i_expected = PR.iter().map(|p| p.powf(2.0f64)).sum::<f64>();
+    let i_0 = 1.0f64 / ALPH_LEN as f64;
 
-    let key_len = key.chars().count();
-    let mut alph = "абвгдежзийклмнопрстуфхцчшщъыьэюя";
-    key = key.to_lowercase();
-    file_content = file_content.to_lowercase();
-    // println!("file: \"{file_content}\"");
-    {
-        let mut re = String::new();
-        for k in key.chars() {
-            if k == 'ё' {
-                re.push('е');
-            } else {
-                if alph.contains(|p| p == k) {
-                    re.push(k);
-                }
-            }
-        }
-        key = re;
-        re = String::new();
-        for k in file_content.chars() {
-            if k == 'ё' {
-                re.push('е');
-            } else {
-                if alph.contains(|p| p == k) {
-                    re.push(k);
-                }
-            }
-        }
-        file_content = re;
-    }
-    println!("index: {}", index(file_content.as_str()));
-    println!("text: {file_content}\nkey: {key}");
-    // println!("char + key_char = result");
-    let alph_len = alph.chars().count();
+    // let mut file = File::create("text.txt").unwrap();
+    let mut file_text = fs::read_to_string("text.txt").unwrap();
+    // file.read_to_string(&mut file_text).unwrap();
+    // let mut to_encrypt_file = File::open("to_encrypt_text.txt").unwrap();
+    let mut to_encrypt_file_text = fs::read_to_string("to_encrypt_text.txt").unwrap();
+    // to_encrypt_file.read_to_string(&mut to_encrypt_file_text).unwrap();
 
-    for (i, char) in file_content.chars().enumerate() {
-        if alph.contains(|p| p == char) {
-            let mut char = char;
+    let key2 = "на";
+    let key3 = "ана";
+    let key4 = "кара";
+    let key5 = "шфата";
+    let keyn = "фалктщуслаиьакз";
 
-
-            let key_char = match key.chars().nth(i % key_len) {
-                None => {
-                    println!("{key}");
-                    println!("{i} {key_len} {}", i % key_len);
-                    panic!();
-                }
-                Some(c) => { c }
-            };
-            let char_pos = alph.chars().position(|p| p == char).unwrap();
-            //println!("{char_pos} {key_char}");
-            let key_char_pos = alph.chars().position(|p| p == key_char).unwrap();
-            //println!("char_pos: {char_pos} + key_char_pos {key_char_pos}) = alph_len {alph_len}");
-            let res_pos = (char_pos + key_char_pos + 1) % alph_len;
-            let res = alph.chars().nth(res_pos).unwrap();
-            result.push(res);
-        }
-    }
-
-    println!("result: {result}");
-    result
+    let original = process_text(to_encrypt_file_text.as_str());
+    println!("processed: \"{original}\"");
+    let encrypted_2 = unsafe { encrypt(original.as_str(), key2, &ring) };
+    let encrypted_3 = unsafe { encrypt(original.as_str(), key3, &ring) };
+    let encrypted_4 = unsafe { encrypt(original.as_str(), key4, &ring) };
+    let encrypted_5 = unsafe { encrypt(original.as_str(), key5, &ring) };
+    let encrypted_n = unsafe { encrypt(original.as_str(), keyn, &ring) };
+    println!("enc: {encrypted_2}");
+    println!("Indicies of coincidence");
+    println!("I_0 in theory: {i_0}");
+    println!("I_M in theory: {i_expected}");
+    println!("I for original message: {}", coincidence_index(original.as_str()));
+    println!("I_{}: {}", key2.len(), coincidence_index(encrypted_2.as_str()));
+    println!("I_{}: {}", key3.len(), coincidence_index(encrypted_3.as_str()));
+    println!("I_{}: {}", key4.len(), coincidence_index(encrypted_4.as_str()));
+    println!("I_{}: {}", key5.len(), coincidence_index(encrypted_5.as_str()));
+    println!("I_{}: {}", keyn.len(), coincidence_index(encrypted_n.as_str()));
 }
 
-fn index(text: &str) -> f64 {
-    let mut set = HashSet::new();
-    for i in text.chars() {
-        set.insert(i);
-    }
-    let alph_symb_in_text = set.len();
-    let text_symb_count = text.chars().count();
-    dbg!(text_symb_count);
-    dbg!(alph_symb_in_text);
-    let mut v = Vec::new();
-    for char in set {
-        let mut c = 0usize;
-        for i in text.chars() {
-            if i == char {
-                c += 1;
-            }
+fn process_text(s: &str) -> String {
+    let mut text = String::with_capacity(s.len());
+
+    for i in s.to_lowercase().chars() {
+        let mut new = i;
+        if new == 'Ё' || new == 'ё' {
+            new = 'е';
+        } else if ('а'..='я').contains(&new) {} else {
+            continue;
         }
-        v.push((char, c));
+        text.push(new);
     }
-    dbg!(&v);
-    let res = (1f64 / (text_symb_count as f64 * (text_symb_count as f64 - 1f64))) * ((v.iter().map(|(_, count)| count * (count - 1)).sum::<usize>()) as f64);
+    text
+}
+
+fn coincidence_index(text: &str) -> f64 {
+    let mut sum = 0usize;
+    for i in ALPH.chars() {
+        let occ = text.chars().filter(|c| c == &i).count();
+        sum += occ * (occ - 1)
+    }
+    sum as f64 / ((text.chars().count() * (text.chars().count() - 1)) as f64)
+}
+
+unsafe fn encrypt(s: &str, key: &str, ring: &HashMap<char, usize>) -> String {
+    let mut res = String::with_capacity(s.len());
+    for i in (0..s.chars().count()).step_by(key.chars().count()) {
+        for j in 0..key.chars().count() {
+            if i + j == s.chars().count() {
+                break;
+            }
+            res.push(ALPH.chars().nth((*ring.get(&(s.chars().nth(i + j).unwrap())).unwrap()
+                + ring.get(&key.chars().nth(j).unwrap()).unwrap()) % ALPH_LEN).unwrap());
+
+        }
+    }
     res
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::encrypt;
-
-    #[test]
-    fn check_key1() {
-        let key = "не";
-        encrypt(key);
-        assert!(true);
-    }
-
-    #[test]
-    fn check_key2() {
-        let key = "так";
-        encrypt(key);
-        assert!(true);
-    }
-
-    #[test]
-    fn check_key3() {
-        let key = "може";
-        encrypt(key);
-        assert!(true);
-    }
-
-    #[test]
-    fn check_key4() {
-        let key = "навря";
-        encrypt(key);
-        assert!(true);
-    }
-
-    #[test]
-    fn check_key5() {
-        let key = "можливиййа";
-        encrypt(key);
-        assert!(true);
-    }
-
-    #[test]
-    fn check_key6() {
-        let key = "сьогоднируснягоритьа";
-        encrypt(key);
-        assert!(true);
-    }
-
-    #[test]
-    fn check_key7() {
-        let key = "СЬОГОДНИРУСНЯГОРИТЬА";
-        encrypt(key);
-        assert!(true);
-    }
-}
-
-fn main() {}
