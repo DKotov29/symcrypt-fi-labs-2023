@@ -77,7 +77,7 @@ fn main() {
 
     let mut bigram1mapsorted: Vec<(String, f64)> = bigram_chastota_map1.clone();
     bigram1mapsorted.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
-    println!("{bigram1mapsorted:?}");
+    println!("bigram1mapsorted: {bigram1mapsorted:?}");
 
     println!("{}", bigram1mapsorted.iter().map(|(a,b)| *b).sum::<f64>());
 
