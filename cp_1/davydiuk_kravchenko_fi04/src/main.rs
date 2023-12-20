@@ -55,8 +55,8 @@ fn main() {
     // println!("сортовані відсотки входжень символу в відфільтрованому тексті: {char_per_sorted:?}");
     let h1 = -char_per_sorted.iter().map(|(a,b )| *b * b.log2()).sum::<f64>();
     println!("H1 chars =  {}", h1);
-    let h2 = h1 * 0.5;
-    println!("H2 chars =  {}", h2);
+    // let h2 = h1 * 0.5;
+    // println!("H2 chars =  {}", h2);
 
     let chars: Vec<char> = filtered.chars().collect();
 
@@ -91,7 +91,7 @@ fn main() {
     // println!("сортована кількість біграм, без перетинів, у відсотках: {bigram1mapsorted:?}");
 
     let h1 = -bigram1mapsorted.iter().map(|(a,b )| *b * b.log2()).sum::<f64>();
-    println!("H1 bigram (no intersections) =  {}", h1);
+    // println!("H1 bigram (no intersections) =  {}", h1);
     let h2 = h1 * 0.5;
     println!("H2 bigram (no intersections) =  {}", h2);
 
@@ -123,7 +123,7 @@ fn main() {
     //println!("кількості входжень біграм, з перетинами, у відсотках: {bigram2mapsorted:?}");
     f_b2.write_all(format!("кількості входжень біграм, з перетинами, у відсотках: {bigram2mapsorted:?}").as_bytes()).unwrap();
     let h1 = -bigram2mapsorted.iter().map(|(a,b )| *b * b.log2()).sum::<f64>();
-    println!("H1 bigram (with intersections) =  {}", h1);
+    // println!("H1 bigram (with intersections) =  {}", h1);
     let h2 = h1 * 0.5;
     println!("H2 bigram (with intersections) =  {}", h2);
 
